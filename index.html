@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"> <title>Brainrot Slang Flashcards</title>
+    <style>
+        /* Basic styling for the page */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            /* Default background color as fallback */
+            background-color: #f0f2f5;
+            margin: 0;
+            color: #333;
+            text-align: center;
+            overflow: hidden; /* Prevent bouncing scroll on swipe */
+
+            /* Background image properties */
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-attachment: fixed; /* Keep background fixed */
+            /* Smooth transition for background image changes */
+            transition: background-image 0.5s ease-in-out;
+        }
+
+        /* Container for the flashcard and button */
+        .flashcard-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 90%;
+            max-width: 450px;
+        }
+
+        /* Styling for the flashcard itself */
+        .flashcard {
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            padding: 30px 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            min-height: 250px; /* Slightly increased height */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 25px;
+            box-sizing: border-box;
+            transition: transform 0.3s ease;
+            cursor: grab; /* Indicate swipe possibility */
+            user-select: none; /* Prevent text selection during swipe */
+            -webkit-user-select: none; /* Safari */
+            -ms-user-select: none; /* IE 10+ */
+            touch-action: pan-y; /* Allow vertical scroll if needed, but prioritize horizontal */
+        }
+        .flashcard:active {
+             cursor: grabbing;
+        }
+
+
+        /* Styling for the slang term */
+        #slang-term {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #0056b3;
+            margin-bottom: 15px;
+            word-wrap: break-word;
+        }
+
+        /* Styling for the meaning */
+        #slang-meaning {
+            font-size: 1.1em;
+            color: #333;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        /* Styling for the navigation button */
+        .nav-button {
+            background-color: #0056b3;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+        }
+
+        .nav-button:hover {
+            background-color: #004494;
+        }
+
+        .nav-button:active {
+             transform: translateY(1px);
+             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="flashcard-container">
+        <div class="flashcard" id="flashcard">
+            <div id="slang-term">Loading...</div>
+            <div id="slang-meaning">Please wait.</div>
+        </div>
+        <button id="next-button" class="nav-button">Next Slang</button>
+    </div>
+
+    <script>
+        // --- Slang Data ---
+        // Updated image URLs for "Bussin'" and "It's giving..." with %27 instead of '.
+        const slangData = [
+            { term: "Rizz", meaning: "Charisma or charm, especially in attracting a romantic partner. Short for charisma.", image: "https://placehold.co/1200x800/E8D8B7/70543E?text=Rizz&font=playfair" },
+            { term: "Skibidi", meaning: "Originating from a viral YouTube series/song, often associated with nonsensical, chaotic, or surreal online content.", image: "https://placehold.co/1200x800/A0D2DB/3A506B?text=Skibidi&font=creepster" },
+            { term: "Gyatt", meaning: "An exclamation, often expressing surprise or admiration, sometimes associated with someone's physique. Derived from 'Goddamn'.", image: "https://placehold.co/1200x800/F4B860/8C491C?text=Gyatt&font=impact" },
+            { term: "Fanum Tax", meaning: "Playfully refers to the act of 'taxing' or taking a portion of a friend's food without asking.", image: "https://placehold.co/1200x800/C1E1C1/4F7942?text=Fanum+Tax&font=arial" },
+            { term: "Sigma", meaning: "Refers to a 'lone wolf' personality archetype, often independent and introverted. Sometimes used ironically online.", image: "https://placehold.co/1200x800/333333/EEEEEE?text=Sigma&font=oswald" },
+            { term: "Ohio", meaning: "Used humorously online as shorthand for describing bizarre, chaotic, or surreal situations, based on memes.", image: "https://placehold.co/1200x800/FF69B4/4B0082?text=Ohio&font=comicsans" },
+            { term: "Let him cook", meaning: "An expression meaning 'let someone do their thing,' especially when they are skilled, focused, or performing well.", image: "https://placehold.co/1200x800/FFD700/8B4513?text=Let+Him+Cook&font=pacifico" },
+            { term: "Bet", meaning: "An affirmation meaning 'Okay,' 'Alright,' 'Sure,' or 'Deal.' Used to express agreement or confirmation.", image: "https://placehold.co/1200x800/90EE90/2E8B57?text=Bet&font=tahoma" },
+            { term: "Sus", meaning: "Short for 'suspicious' or 'suspect.' Used to describe someone or something that seems questionable or untrustworthy.", image: "https://placehold.co/1200x800/FF4500/461108?text=Sus&font=nosifer" },
+            { term: "Cap / No Cap", meaning: "'Cap' means a lie or falsehood. 'No Cap' means 'no lie,' emphasizing that something is true or serious.", image: "https://placehold.co/1200x800/87CEEB/1E90FF?text=No+Cap&font=verdana" },
+            { term: "NPC", meaning: "Non-Player Character. Used to describe someone perceived as lacking independent thought or acting predictably, like a background character in a game.", image: "https://placehold.co/1200x800/CCCCCC/555555?text=NPC&font=monospace" },
+            { term: "Delulu", meaning: "Short for 'delusional,' often used playfully to describe someone with unrealistic beliefs or aspirations, especially in fandoms or relationships.", image: "https://placehold.co/1200x800/FFC0CB/800080?text=Delulu&font=dancing" },
+            { term: "Bussin'", meaning: "Describes something, usually food, as extremely good or delicious.", image: "https://placehold.co/1200x800/FFA500/A0522D?text=Bussin%27&font=lobster" }, // Updated ' to %27
+            { term: "Glow-up", meaning: "A significant positive transformation in appearance, confidence, or lifestyle.", image: "https://placehold.co/1200x800/FFB6C1/8B008B?text=Glow-up&font=greatvibes" },
+            { term: "Mid", meaning: "Describes something as mediocre, average, or unimpressive.", image: "https://placehold.co/1200x800/D2B48C/808080?text=Mid&font=impact" },
+            { term: "Based", meaning: "Describes someone who is authentic, speaks their mind regardless of others' opinions, or holds an opinion you agree with. Opposite of 'cringe'.", image: "https://placehold.co/1200x800/98FB98/006400?text=Based&font=arialblack" },
+            { term: "It's giving...", meaning: "Used to describe the vibe or essence of something, often followed by a noun (e.g., 'It's giving main character energy').", image: "https://placehold.co/1200x800/B0E0E6/4682B4?text=It%27s+Giving...&font=tangerine" }, // Updated ' to %27
+            { term: "IJBOL", meaning: "Acronym for 'I just burst out laughing.' Used to express strong amusement.", image: "https://placehold.co/1200x800/FFFFE0/FFD700?text=IJBOL&font=comicsans" },
+            { term: "Side eye", meaning: "A facial expression indicating disapproval, skepticism, or judgment, often conveyed through text or emojis.", image: "https://placehold.co/1200x800/E6E6FA/483D8B?text=Side+Eye&font=georgia" },
+            { term: "Looksmaxxing", meaning: "The process of trying to improve one's physical appearance to the maximum potential.", image: "https://placehold.co/1200x800/ADD8E6/00008B?text=Looksmaxxing&font=bebasneue" },
+            { term: "Mewing", meaning: "A technique involving specific tongue posture, claimed by some online communities to improve jawline definition (scientific evidence is limited).", image: "https://placehold.co/1200x800/F5F5DC/A0522D?text=Mewing&font=times" },
+            { term: "Preppy", meaning: "A style associated with preparatory school students, often characterized by specific clothing brands, pastel colors, and a clean-cut aesthetic.", image: "https://placehold.co/1200x800/FFDBE9/FF69B4?text=Preppy&font=sacramento" }
+        ];
+
+        // --- Application Logic ---
+        let currentIndex = 0;
+
+        const termElement = document.getElementById('slang-term');
+        const meaningElement = document.getElementById('slang-meaning');
+        const nextButton = document.getElementById('next-button');
+        const flashcardElement = document.getElementById('flashcard'); // Get flashcard element for swipe
+
+        /**
+         * Function to display the flashcard content and update background.
+         */
+        function showCard() {
+            if (slangData.length === 0) {
+                termElement.textContent = "No Slang";
+                meaningElement.textContent = "Add some slang terms to the script!";
+                document.body.style.backgroundImage = 'none';
+                return;
+            }
+            // Ensure index is within bounds (useful if data array changes dynamically)
+            currentIndex = (currentIndex + slangData.length) % slangData.length;
+
+            const currentSlang = slangData[currentIndex];
+            termElement.textContent = currentSlang.term;
+            meaningElement.textContent = currentSlang.meaning;
+
+            if (currentSlang.image) {
+                document.body.style.backgroundImage = `url('${currentSlang.image}')`;
+            } else {
+                document.body.style.backgroundImage = 'none';
+                document.body.style.backgroundColor = '#f0f2f5';
+            }
+        }
+
+        /**
+         * Function to show the next card.
+         */
+        function nextCard() {
+            currentIndex++;
+            // No need to check bounds here, showCard handles it with modulo
+            showCard();
+        }
+
+        /**
+         * Function to show the previous card.
+         */
+        function previousCard() {
+            currentIndex--;
+            // No need to check bounds here, showCard handles it with modulo
+            showCard();
+        }
+
+        // Add event listener to the next button
+        nextButton.addEventListener('click', nextCard);
+
+        // --- Swipe Logic ---
+        let touchStartX = 0;
+        let touchEndX = 0;
+        let touchStartY = 0; // Track Y position to distinguish scroll from swipe
+        const swipeThreshold = 50; // Minimum distance in pixels for a swipe
+
+        flashcardElement.addEventListener('touchstart', (event) => {
+            // Record starting touch position (only first touch point)
+            touchStartX = event.changedTouches[0].screenX;
+            touchStartY = event.changedTouches[0].screenY;
+        }, { passive: true }); // Use passive: true where possible
+
+        flashcardElement.addEventListener('touchend', (event) => {
+            // Record ending touch position
+            touchEndX = event.changedTouches[0].screenX;
+            const touchEndY = event.changedTouches[0].screenY; // Get Y end position
+
+            handleSwipe(touchEndY);
+        });
+
+        function handleSwipe(touchEndY) {
+            const touchDiffX = touchEndX - touchStartX;
+            const touchDiffY = touchEndY - touchStartY;
+
+            // Check if horizontal movement is dominant over vertical and exceeds threshold
+            if (Math.abs(touchDiffX) > swipeThreshold && Math.abs(touchDiffX) > Math.abs(touchDiffY)) {
+                if (touchDiffX < 0) {
+                    // Swiped Left (Next)
+                    nextCard();
+                } else {
+                    // Swiped Right (Previous)
+                    previousCard();
+                }
+            }
+
+            // Reset values (optional, but good practice)
+            touchStartX = 0;
+            touchEndX = 0;
+            touchStartY = 0;
+        }
+
+
+        // --- Initial Load ---
+        showCard();
+
+    </script>
+
+</body>
+</html>
