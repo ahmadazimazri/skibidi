@@ -33,8 +33,8 @@
             align-items: center;
             width: 90%;
             max-width: 450px;
-            position: relative; /* Needed for positioning audio button */
-            padding-top: 50px; /* Add padding to prevent overlap with audio button */
+            position: relative;
+            padding-top: 20px; /* Reduced padding */
         }
 
         /* Styling for the flashcard itself */
@@ -80,7 +80,7 @@
         }
 
         /* Styling for the navigation button */
-        .nav-button {
+        .nav-button { /* Style for Next Slang button */
             background-color: #0056b3;
             color: white;
             border: none;
@@ -91,6 +91,8 @@
             font-weight: bold;
             transition: background-color 0.3s ease;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+            height: 44px;
+            box-sizing: border-box;
         }
         .nav-button:hover {
             background-color: #004494;
@@ -100,41 +102,32 @@
              box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
-        /* Style for the audio control button */
-        #audio-control-button {
-            position: absolute;
-            top: 10px; /* Positioned relative to flashcard-container */
-            right: 10px; /* Positioned relative to flashcard-container */
-            padding: 8px 12px;
-            font-size: 0.85em;
-            cursor: pointer;
-            background-color: #0366d6;
-            color: white;
-            border: 1px solid rgba(27,31,35,.15);
-            border-radius: 6px;
-            box-shadow: 0 1px 0 rgba(27,31,35,.04);
-            z-index: 10; /* Ensure it's above other elements if needed */
-        }
-        #audio-control-button:hover {
-            background-color: #005cc5;
+        /* Container for the button */
+        .button-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
         }
 
     </style>
 </head>
 <body>
-    <audio id="background-audio" loop>
-        <source src="https://music.youtube.com/watch?v=AqHlQL3PoD8&si=zg4QH-Wcyw8PhdyJ" type="audio/mpeg">
+    <audio id="sound-player">
         Your browser does not support the audio element.
     </audio>
 
     <div class="flashcard-container">
-        <button id="audio-control-button">Play Music</button>
 
         <div class="flashcard" id="flashcard">
             <div id="slang-term">Loading...</div>
             <div id="slang-meaning">Please wait.</div>
         </div>
-        <button id="next-button" class="nav-button">Next Slang</button>
+
+        <div class="button-container">
+             <button id="next-button" class="nav-button">Next Slang</button>
+        </div>
     </div>
 
     <script>
@@ -164,117 +157,109 @@
             { term: "Preppy", meaning: "A style associated with preparatory school students, often characterized by specific clothing brands, pastel colors, and a clean-cut aesthetic.", image: "https://placehold.co/1200x800/FFDBE9/FF69B4?text=Preppy&font=sacramento" }
         ];
 
-        // --- Application References ---
-        let currentIndex = 0;
-        const termElement = document.getElementById('slang-term');
-        const meaningElement = document.getElementById('slang-meaning');
-        const nextButton = document.getElementById('next-button');
-        const flashcardElement = document.getElementById('flashcard');
-        const audioPlayer = document.getElementById('background-audio'); // Audio player reference
-        const audioButton = document.getElementById('audio-control-button'); // Audio button reference
 
-        // --- Flashcard Logic ---
-        /**
-         * Function to display the flashcard content and update background image.
-         */
-        function showCard() {
-            if (slangData.length === 0) {
-                termElement.textContent = "No Slang";
-                meaningElement.textContent = "Add some slang terms to the script!";
-                document.body.style.backgroundImage = 'none';
-                return;
-            }
-            currentIndex = (currentIndex + slangData.length) % slangData.length; // Ensure index is always valid
+// --- Single Sound File Path ---
+// IMPORTANT: Replace this path with the correct relative path to your ack.mp3 file
+// Ensure you have uploaded ack.mp3 to your repository (e.g., in an 'audio' folder).
+const soundFilePath = './audio/ack.mp3'; // Example path
 
-            const currentSlang = slangData[currentIndex];
-            termElement.textContent = currentSlang.term;
-            meaningElement.textContent = currentSlang.meaning;
+// --- Application References ---
+let currentIndex = 0;
+const termElement = document.getElementById('slang-term');
+const meaningElement = document.getElementById('slang-meaning');
+const nextButton = document.getElementById('next-button');
+const flashcardElement = document.getElementById('flashcard');
+const soundPlayer = document.getElementById('sound-player'); // Reference to the audio element
 
-            // Update background image for the body
-            if (currentSlang.image) {
-                document.body.style.backgroundImage = `url('${currentSlang.image}')`;
-            } else {
-                document.body.style.backgroundImage = 'none';
-                document.body.style.backgroundColor = '#f0f2f5';
-            }
-        }
+// --- Flashcard Logic ---
+/**
+ * Function to display the flashcard content, update background, and play sound.
+ */
+function showCard(isInitialLoad = false) {
+    if (slangData.length === 0) {
+        termElement.textContent = "No Slang";
+        meaningElement.textContent = "Add slang terms to the script!";
+        document.body.style.backgroundImage = 'none';
+        return;
+    }
+    currentIndex = (currentIndex + slangData.length) % slangData.length;
 
-        /** Function to show the next card. */
-        function nextCard() {
-            currentIndex++;
-            showCard();
-        }
+    const currentSlang = slangData[currentIndex];
+    termElement.textContent = currentSlang.term;
+    meaningElement.textContent = currentSlang.meaning;
 
-        /** Function to show the previous card. */
-        function previousCard() {
-            currentIndex--;
-            showCard();
-        }
+    // Update background image
+    if (currentSlang.image) {
+        document.body.style.backgroundImage = `url('${currentSlang.image}')`;
+    } else {
+        document.body.style.backgroundImage = 'none';
+        document.body.style.backgroundColor = '#f0f2f5';
+    }
 
-        // Add event listener to the next button
-        nextButton.addEventListener('click', nextCard);
+    // --- Play Sound Logic ---
+    // Don't autoplay on the very first card load, wait for user interaction
+    if (!isInitialLoad) {
+        // Check if the sound file path is defined
+        if (soundFilePath) {
+            // Ensure player isn't already playing (optional, prevents overlap if sound is long)
+            // soundPlayer.pause();
+            // soundPlayer.currentTime = 0;
 
-        // --- Swipe Logic ---
-        let touchStartX = 0;
-        let touchEndX = 0;
-        let touchStartY = 0;
-        const swipeThreshold = 50;
-
-        flashcardElement.addEventListener('touchstart', (event) => {
-            touchStartX = event.changedTouches[0].screenX;
-            touchStartY = event.changedTouches[0].screenY;
-        }, { passive: true });
-
-        flashcardElement.addEventListener('touchend', (event) => {
-            touchEndX = event.changedTouches[0].screenX;
-            const touchEndY = event.changedTouches[0].screenY;
-            handleSwipe(touchEndY);
-        });
-
-        function handleSwipe(touchEndY) {
-            const touchDiffX = touchEndX - touchStartX;
-            const touchDiffY = touchEndY - touchStartY;
-
-            if (Math.abs(touchDiffX) > swipeThreshold && Math.abs(touchDiffX) > Math.abs(touchDiffY)) {
-                if (touchDiffX < 0) { nextCard(); } else { previousCard(); }
-            }
-            touchStartX = 0; touchEndX = 0; touchStartY = 0; // Reset
-        }
-
-        // --- Audio Control Logic ---
-        const audioSource = audioPlayer.querySelector('source');
-        // Check if the source attribute exists and is not empty
-        if (!audioSource || !audioSource.getAttribute('src') || audioSource.getAttribute('src').trim() === "") {
-             audioButton.textContent = "No Audio";
-             audioButton.disabled = true;
-             audioButton.style.cursor = 'not-allowed';
-             audioButton.style.backgroundColor = '#6a737d';
-             console.warn("Audio source is not set or empty in the <audio> tag.");
-        } else {
-            audioButton.addEventListener('click', () => {
-                if (audioPlayer.paused) {
-                    audioPlayer.play().then(() => {
-                        audioButton.textContent = 'Pause';
-                    }).catch(error => {
-                        console.error("Audio play failed. Check audio source URL and browser console.", error);
-                        // Display specific error if possible, or generic error
-                        audioButton.textContent = 'Play Error';
-                        // Optionally disable button permanently or temporarily
-                        // audioButton.disabled = true;
-                    });
-                } else {
-                    audioPlayer.pause();
-                    audioButton.textContent = 'Play';
-                }
+            soundPlayer.src = soundFilePath; // Set the source to the single sound file
+            soundPlayer.play().catch(error => {
+                console.error(`Failed to play sound: ${soundFilePath}`, error);
+                // Note: Autoplay might be blocked by the browser until the user interacts
+                // with the page (clicks, swipes) at least once.
             });
-             // Set initial button text
-             audioButton.textContent = 'Play';
+        } else {
+            console.warn("soundFilePath is not defined.");
         }
+    }
+}
 
-        // --- Initial Load ---
-        showCard(); // Display the first card
+/** Function to show the next card. */
+function nextCard() {
+    currentIndex++;
+    showCard(); // Pass false for isInitialLoad
+}
 
-    </script>
+/** Function to show the previous card. */
+function previousCard() {
+    currentIndex--;
+    showCard(); // Pass false for isInitialLoad
+}
+
+// Add event listener to the next button
+nextButton.addEventListener('click', nextCard);
+
+// --- Swipe Logic ---
+let touchStartX = 0;
+let touchEndX = 0;
+let touchStartY = 0;
+const swipeThreshold = 50;
+flashcardElement.addEventListener('touchstart', (event) => {
+    touchStartX = event.changedTouches[0].screenX;
+    touchStartY = event.changedTouches[0].screenY;
+}, { passive: true });
+flashcardElement.addEventListener('touchend', (event) => {
+    touchEndX = event.changedTouches[0].screenX;
+    const touchEndY = event.changedTouches[0].screenY;
+    handleSwipe(touchEndY);
+});
+function handleSwipe(touchEndY) {
+    const touchDiffX = touchEndX - touchStartX;
+    const touchDiffY = touchEndY - touchStartY;
+    if (Math.abs(touchDiffX) > swipeThreshold && Math.abs(touchDiffX) > Math.abs(touchDiffY)) {
+        // Pass false for isInitialLoad on swipe actions
+        if (touchDiffX < 0) { nextCard(); } else { previousCard(); }
+    }
+    touchStartX = 0; touchEndX = 0; touchStartY = 0;
+}
+
+// --- Initial Load ---
+showCard(true); // Pass true for isInitialLoad to prevent sound on first load
+
+</script>
 
 </body>
 </html>
