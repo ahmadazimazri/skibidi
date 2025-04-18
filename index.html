@@ -132,6 +132,7 @@
 
     <script>
         // --- Slang Data ---
+        // Restored full placeholder image URLs.
         const slangData = [
              { term: "Rizz", meaning: "Charisma or charm, especially in attracting a romantic partner. Short for charisma.", image: "https://placehold.co/1200x800/E8D8B7/70543E?text=Rizz&font=playfair" },
             { term: "Skibidi", meaning: "Originating from a viral YouTube series/song, often associated with nonsensical, chaotic, or surreal online content.", image: "https://placehold.co/1200x800/A0D2DB/3A506B?text=Skibidi&font=creepster" },
@@ -157,109 +158,113 @@
             { term: "Preppy", meaning: "A style associated with preparatory school students, often characterized by specific clothing brands, pastel colors, and a clean-cut aesthetic.", image: "https://placehold.co/1200x800/FFDBE9/FF69B4?text=Preppy&font=sacramento" }
         ];
 
+        const availableSounds = [
+            './audio/ack.mp3',
+            './audio/bruh-sound-effect_WstdzdM.mp3',
+            './audio/meme_lgkJmX6.mp3',
+            './audio/okay-meme.mp3',
+            './audio/the-beginning-of-sicko-mode.mp3',
+            './audio/videoplayback_y6EZG5Z.mp3'
+        ];
 
-// --- Single Sound File Path ---
-// IMPORTANT: Replace this path with the correct relative path to your ack.mp3 file
-// Ensure you have uploaded ack.mp3 to your repository (e.g., in an 'audio' folder).
-const soundFilePath = './audio/ack.mp3'; // Example path
+        // --- Application References ---
+        let currentIndex = 0;
+        const termElement = document.getElementById('slang-term');
+        const meaningElement = document.getElementById('slang-meaning');
+        const nextButton = document.getElementById('next-button');
+        const flashcardElement = document.getElementById('flashcard');
+        const soundPlayer = document.getElementById('sound-player'); // Reference to the audio element
 
-// --- Application References ---
-let currentIndex = 0;
-const termElement = document.getElementById('slang-term');
-const meaningElement = document.getElementById('slang-meaning');
-const nextButton = document.getElementById('next-button');
-const flashcardElement = document.getElementById('flashcard');
-const soundPlayer = document.getElementById('sound-player'); // Reference to the audio element
+        // --- Flashcard Logic ---
+        /**
+         * Function to display the flashcard content, update background, and play a random sound.
+         */
+        function showCard(isInitialLoad = false) {
+            if (slangData.length === 0) {
+                termElement.textContent = "No Slang";
+                meaningElement.textContent = "Add slang terms to the script!";
+                document.body.style.backgroundImage = 'none';
+                return;
+            }
+            currentIndex = (currentIndex + slangData.length) % slangData.length;
 
-// --- Flashcard Logic ---
-/**
- * Function to display the flashcard content, update background, and play sound.
- */
-function showCard(isInitialLoad = false) {
-    if (slangData.length === 0) {
-        termElement.textContent = "No Slang";
-        meaningElement.textContent = "Add slang terms to the script!";
-        document.body.style.backgroundImage = 'none';
-        return;
-    }
-    currentIndex = (currentIndex + slangData.length) % slangData.length;
+            const currentSlang = slangData[currentIndex];
+            termElement.textContent = currentSlang.term;
+            meaningElement.textContent = currentSlang.meaning;
 
-    const currentSlang = slangData[currentIndex];
-    termElement.textContent = currentSlang.term;
-    meaningElement.textContent = currentSlang.meaning;
+            // Update background image
+            if (currentSlang.image) {
+                document.body.style.backgroundImage = `url('${currentSlang.image}')`;
+            } else {
+                document.body.style.backgroundImage = 'none';
+                document.body.style.backgroundColor = '#f0f2f5';
+            }
 
-    // Update background image
-    if (currentSlang.image) {
-        document.body.style.backgroundImage = `url('${currentSlang.image}')`;
-    } else {
-        document.body.style.backgroundImage = 'none';
-        document.body.style.backgroundColor = '#f0f2f5';
-    }
+            // --- Play Random Sound Logic ---
+            // Don't autoplay on the very first card load, wait for user interaction
+            if (!isInitialLoad) {
+                // Check if there are any sounds available
+                if (availableSounds && availableSounds.length > 0) {
+                    // Select a random index from the availableSounds array
+                    const randomIndex = Math.floor(Math.random() * availableSounds.length);
+                    const randomSoundPath = availableSounds[randomIndex];
 
-    // --- Play Sound Logic ---
-    // Don't autoplay on the very first card load, wait for user interaction
-    if (!isInitialLoad) {
-        // Check if the sound file path is defined
-        if (soundFilePath) {
-            // Ensure player isn't already playing (optional, prevents overlap if sound is long)
-            // soundPlayer.pause();
-            // soundPlayer.currentTime = 0;
-
-            soundPlayer.src = soundFilePath; // Set the source to the single sound file
-            soundPlayer.play().catch(error => {
-                console.error(`Failed to play sound: ${soundFilePath}`, error);
-                // Note: Autoplay might be blocked by the browser until the user interacts
-                // with the page (clicks, swipes) at least once.
-            });
-        } else {
-            console.warn("soundFilePath is not defined.");
+                    // Set the audio player's source to the random path and play
+                    soundPlayer.src = randomSoundPath;
+                    soundPlayer.play().catch(error => {
+                        console.error(`Failed to play sound: ${randomSoundPath}`, error);
+                        // Note: Autoplay might be blocked by the browser until the user interacts
+                        // with the page (clicks, swipes) at least once.
+                    });
+                } else {
+                    console.warn("The availableSounds array is empty. No sound to play.");
+                }
+            }
         }
-    }
-}
 
-/** Function to show the next card. */
-function nextCard() {
-    currentIndex++;
-    showCard(); // Pass false for isInitialLoad
-}
+        /** Function to show the next card. */
+        function nextCard() {
+            currentIndex++;
+            showCard(); // Pass false for isInitialLoad
+        }
 
-/** Function to show the previous card. */
-function previousCard() {
-    currentIndex--;
-    showCard(); // Pass false for isInitialLoad
-}
+        /** Function to show the previous card. */
+        function previousCard() {
+            currentIndex--;
+            showCard(); // Pass false for isInitialLoad
+        }
 
-// Add event listener to the next button
-nextButton.addEventListener('click', nextCard);
+        // Add event listener to the next button
+        nextButton.addEventListener('click', nextCard);
 
-// --- Swipe Logic ---
-let touchStartX = 0;
-let touchEndX = 0;
-let touchStartY = 0;
-const swipeThreshold = 50;
-flashcardElement.addEventListener('touchstart', (event) => {
-    touchStartX = event.changedTouches[0].screenX;
-    touchStartY = event.changedTouches[0].screenY;
-}, { passive: true });
-flashcardElement.addEventListener('touchend', (event) => {
-    touchEndX = event.changedTouches[0].screenX;
-    const touchEndY = event.changedTouches[0].screenY;
-    handleSwipe(touchEndY);
-});
-function handleSwipe(touchEndY) {
-    const touchDiffX = touchEndX - touchStartX;
-    const touchDiffY = touchEndY - touchStartY;
-    if (Math.abs(touchDiffX) > swipeThreshold && Math.abs(touchDiffX) > Math.abs(touchDiffY)) {
-        // Pass false for isInitialLoad on swipe actions
-        if (touchDiffX < 0) { nextCard(); } else { previousCard(); }
-    }
-    touchStartX = 0; touchEndX = 0; touchStartY = 0;
-}
+        // --- Swipe Logic ---
+        let touchStartX = 0;
+        let touchEndX = 0;
+        let touchStartY = 0;
+        const swipeThreshold = 50;
+        flashcardElement.addEventListener('touchstart', (event) => {
+            touchStartX = event.changedTouches[0].screenX;
+            touchStartY = event.changedTouches[0].screenY;
+        }, { passive: true });
+        flashcardElement.addEventListener('touchend', (event) => {
+            touchEndX = event.changedTouches[0].screenX;
+            const touchEndY = event.changedTouches[0].screenY;
+            handleSwipe(touchEndY);
+        });
+        function handleSwipe(touchEndY) {
+            const touchDiffX = touchEndX - touchStartX;
+            const touchDiffY = touchEndY - touchStartY;
+            if (Math.abs(touchDiffX) > swipeThreshold && Math.abs(touchDiffX) > Math.abs(touchDiffY)) {
+                // Pass false for isInitialLoad on swipe actions
+                if (touchDiffX < 0) { nextCard(); } else { previousCard(); }
+            }
+            touchStartX = 0; touchEndX = 0; touchStartY = 0;
+        }
 
-// --- Initial Load ---
-showCard(true); // Pass true for isInitialLoad to prevent sound on first load
+        // --- Initial Load ---
+        showCard(true); // Pass true for isInitialLoad to prevent sound on first load
 
-</script>
+    </script>
 
 </body>
 </html>
